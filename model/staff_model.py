@@ -1,18 +1,21 @@
-from pydantic import BaseModel, Field
-from typing import Literal
+from pydantic import BaseModel, Field, EmailStr
+from auth.auth_role import Role
+from datetime import datetime, timezone
+from typing import Optional
+from functools import partial
 
 class StaffBase(BaseModel):
-    name: str = Field(..., min_length=2, max_length=20, description="Staff name")
-    role: Literal["nurse", "receptionist", "lab_technician", "pharmacist", "janitor"] = Field(..., description="Staff role")
-    shift: Literal["morning", "evening", "night"] = Field(..., description="Shift timing")
-    salary: float = Field(..., ge=0, description="Monthly salary")
-    contact: int = Field(
-        ...,
-        description="10 digit contact number",
-        le=9999999999,
-        ge=1000000000
-    )
-    city: str = Field(..., min_length=2, max_length=12, description="City of staff")
+    name: str = Field(..., min_length=2, max_length=25)
+    email: EmailStr
+    phone: int = Field(..., description="10 digit contact number", ge=1000000000, le=9999999999)
+    role: str = Role.STAFF
+    shift: str = Field(..., min_length=2, max_length=20)
+
+class StaffCreate(StaffBase):
+    password: str = Field(..., min_length=6)
 
 class Staff(StaffBase):
-    id: str | None = Field(default=None, description="MongoDB ID")
+    id: str = Field(...)
+    user_id: Optional[str] = Field(None, description="Linked user ID")
+    created_at: datetime = Field(default_factory=partial(datetime.now, timezone.utc))
+    updated_at: datetime = Field(default_factory=partial(datetime.now, timezone.utc))

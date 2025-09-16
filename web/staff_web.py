@@ -1,41 +1,34 @@
-from fastapi import APIRouter, HTTPException,Body,Path
-from typing import List
-from model.staff_model import Staff, StaffBase
-from service import staff_service as staff_service
+from fastapi import APIRouter, Path, Body, Depends, HTTPException
+from typing import List, Dict, Any
+from auth.auth_handler import role_required, get_current_user
+from auth.auth_role import Role
+from model.staff_model import StaffBase, StaffCreate, Staff
 
-staff_router = APIRouter(prefix="/staffs", tags=["Staffs"])
+import service.staff_service as service
 
+staff_router = APIRouter(prefix="/staff", tags=["Staff"])
 
-@staff_router.post("/new-staff", response_model=dict)
-async def create_staff(staff: StaffBase=Body(...)):
-    return await staff_service.create_staff(staff)
+# Create staff (Admin only)
+@staff_router.post("/create", response_model=Dict[str, Any], summary="Create new staff")
+async def create_staff(staff: StaffCreate, user: Dict[str, Any] = Depends(role_required([Role.ADMIN]))):
+    return await service.create_staff(staff)
 
+# Get all staff (Admin only)
+@staff_router.get("/", response_model=List[Staff], summary="Get all staff")
+async def get_all(user: Dict[str, Any] = Depends(role_required([Role.ADMIN]))):
+    return await service.get_all()
 
-@staff_router.get("/", response_model=List[dict])
-async def get_all_staff():
-    return await staff_service.get_all_staff()
+# Get staff by ID (Admin only)
+@staff_router.get("/{id}", response_model=Staff, summary="Get staff by ID")
+async def get_by_id(id: str = Path(...), user: Dict[str, Any] = Depends(role_required([Role.ADMIN]))):
+    return await service.get_by_id(id)
 
+# Update staff (Admin only)
+@staff_router.put("/update/{id}", summary="Update staff by ID")
+async def update_staff(id: str, update_data: dict = Body(...), user: Dict[str, Any] = Depends(role_required([Role.ADMIN]))):
+    return await service.update_staff_by_id(id, update_data)
 
-@staff_router.get("/{staff_id}", response_model=Staff)
-async def get_staff_by_id(staff_id: str=Path(...,description="get detail of staff using MongoID")):
-    staff = await staff_service.get_staff_by_id(staff_id)
-    if not staff:
-        raise HTTPException(status_code=404, detail="Staff not found")
-    return staff
-
-
-@staff_router.put("/update/{staff_id}", response_model=dict)
-async def update_staff_by_id(staff_id: str=Path(...,description="update the data using MongoID"),
-                             update_data: dict=Body(...)):
-    return await staff_service.update_staff(staff_id, update_data)
-
-@staff_router.put("/update/", response_model=dict)
-async def update_staff(filter: dict=Body(...,description="Enter the filter condition for update")
-                       ,update_data: dict=Body(...,description="enter the data for update")
-                       ,multiple_update: bool = False):
-    return await staff_service.update_staff(filter, update_data, multiple_update)
-
-
-@staff_router.delete("/delete/{staff_id}", response_model=dict)
-async def delete_staff(staff_id: str=Path(...,description="Remove the staff using MongoID")):
-    return await staff_service.delete_staff(staff_id)
+# Delete staff (Admin only)
+@staff_router.delete("/delete/{id}", summary="Delete staff by ID")
+async def delete_staff(id: str, user: Dict[str, Any] = Depends(role_required([Role.ADMIN]))):
+    return await service.delete_staff(id)
