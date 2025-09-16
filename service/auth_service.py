@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi import HTTPException
 from data.user_data import create_user,get_user_by_id,get_user_by_email
 from auth.hashing import get_password_hash,verify_password
-from auth.token import create_access_token
+from auth.auth_handler import create_access_token
 
 class AuthUser:
 
@@ -27,7 +27,7 @@ class AuthUser:
 
     @staticmethod
     async def create_token_for_user(user: Dict[str, Any], expires_minutes: int | None = None) -> Dict[str, Any]:
-        sub = user["_id"]
+        sub = user["id"]
         role = user.get("role", "patient")
         expires_delta = timedelta(minutes=expires_minutes) if expires_minutes else None
         token_info = create_access_token(subject=sub, role=role, expires_delta=expires_delta)

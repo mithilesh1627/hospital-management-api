@@ -8,7 +8,7 @@ from model.appointment_model import AppointmentBase, Appointment
 
 def dict_to_model(doc: dict) -> Appointment:
     return Appointment(
-        _id=str(doc["_id"]),
+        _id=str(doc["id"]),
         patient_id=doc["patient_id"],
         doctor_id=doc["doctor_id"],
         appointment_date=doc["appointment_date"],
@@ -30,11 +30,11 @@ async def create_appointment(appointment: AppointmentBase) -> dict:
             "appointment_id":f"{result.inserted_id}"}
 
 async def get_appointment(appointment_id: str) -> Optional[Appointment]:
-    doc = await appointment_coll.find_one({"_id": ObjectId(appointment_id)})
+    doc = await appointment_coll.find_one({"id": ObjectId(appointment_id)})
     if doc:
         return Appointment(
-            _id=str(doc["_id"]),
-            **{k: v for k, v in doc.items() if k != "_id"}
+            _id=str(doc["id"]),
+            **{k: v for k, v in doc.items() if k != "id"}
         )
     else:
         raise HTTPException(status_code=404, detail="Appointment not found")
@@ -43,7 +43,7 @@ async def get_all_appointments()-> List[dict]:
     appoint: List[dict] = []
     cursor = appointment_coll.find({})
     async for doc in cursor:
-        doc["_id"] = str(doc["_id"])
+        doc["id"] = str(doc["id"])
         appoint.append(doc)
     return appoint
 
@@ -81,7 +81,7 @@ async def update_appointment_by_id(appointment_id: str, update_data: dict) -> di
     try:
         update_data["updated_at"] = datetime.utcnow()
         result = await appointment_coll.update_one(
-            {"_id": ObjectId(appointment_id)},
+            {"id": ObjectId(appointment_id)},
             {"$set": update_data}
         )
     except InvalidId:
@@ -98,7 +98,7 @@ async def update_appointment_by_id(appointment_id: str, update_data: dict) -> di
 
 async def delete_appointment(appointment_id: str) ->dict:
     try:
-        result = await appointment_coll.delete_one({"_id": ObjectId(appointment_id)})
+        result = await appointment_coll.delete_one({"id": ObjectId(appointment_id)})
     except InvalidId:
         raise HTTPException(status_code=400, detail="Invalid doctor ID format")
 

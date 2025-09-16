@@ -7,7 +7,7 @@ from model.doctor_model import Doctor, DoctorBase
 
 def dict_to_model(doc: dict) -> Doctor:
     return Doctor(
-        id=str(doc["_id"]),
+        id=str(doc["id"]),
         name=doc["name"],
         specialization=doc["specialization"],
         experience_years=doc["experience_years"],
@@ -20,13 +20,13 @@ async def get_all() -> List[dict]:
     doctors: List[dict] = []
     cursor = doctors_coll.find({})
     async for doc in cursor:
-        doc["_id"] = str(doc["_id"])
+        doc["id"] = str(doc["id"])
         doctors.append(doc)
     return doctors
 
 async def get_by_id(id: str) -> Optional[Doctor]:
     try:
-        doc = await doctors_coll.find_one({"_id": ObjectId(id)})
+        doc = await doctors_coll.find_one({"id": ObjectId(id)})
         if doc:
             return dict_to_model(doc)
     except InvalidId:
@@ -35,12 +35,12 @@ async def get_by_id(id: str) -> Optional[Doctor]:
 
 async def create_doctor(doctor: DoctorBase) -> dict:
     insert = await doctors_coll.insert_one(doctor.model_dump())
-    return {"message": "Doctor add to DB", "_id": str(insert.inserted_id)}
+    return {"message": "Doctor add to DB", "id": str(insert.inserted_id)}
 
 async def update_doctor_by_id(id: str, update_data: dict) -> dict:
     try:
         result = await doctors_coll.update_one(
-            {"_id": ObjectId(id)},
+            {"id": ObjectId(id)},
             {"$set": update_data}
         )
     except InvalidId:
@@ -57,7 +57,7 @@ async def update_doctor_by_id(id: str, update_data: dict) -> dict:
 
 async def delete_doctor_by_id(id: str) -> dict:
     try:
-        result = await doctors_coll.delete_one({"_id": ObjectId(id)})
+        result = await doctors_coll.delete_one({"id": ObjectId(id)})
     except InvalidId:
         raise HTTPException(status_code=400, detail="Invalid doctor ID format")
 
@@ -67,7 +67,7 @@ async def delete_doctor_by_id(id: str) -> dict:
     return {
         "message": "Doctor deleted successfully",
         "deleted_count": result.deleted_count,
-        "_id": id
+        "id": id
     }
 
 async def update_doctor(filter: dict,update_data: dict,multiple_update: bool = False) -> Dict[str, Any]:

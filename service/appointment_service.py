@@ -34,7 +34,7 @@ async def delete_appointment_(appointment_id: str) -> dict:
     return await data.delete_appointment(appointment_id)
 
 async def cancel_appointment(appointment_id: str) ->  Dict[str, Any]:
-        return await data.update_appointment({"_id": ObjectId(appointment_id)},{"status": "cancelled"},False)
+        return await data.update_appointment({"id": ObjectId(appointment_id)},{"status": "cancelled"},False)
 
 async def update_appointment(filter_: dict,update_data: dict,multiple_update: bool = False) -> Dict[str, Any]:
     return await data.update_appointment(filter_,update_data,multiple_update)

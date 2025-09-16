@@ -17,10 +17,10 @@ app = FastAPI(
 )
 
 app.include_router(patient_router)
-app.include_router(doctor_router)
-app.include_router(staff_router)
-app.include_router(appointment_router)
-app.include_router(auth_router)
+# app.include_router(doctor_router)
+# app.include_router(staff_router)
+# app.include_router(appointment_router)
+# app.include_router(auth_router)
 @app.get("/", tags=["Root"])
 def hello():
     return {"message": "Welcome to my homepage"}

@@ -7,7 +7,7 @@ from model.staff_model import Staff, StaffBase
 
 def dict_to_model(doc: dict) -> Staff:
     return Staff(
-        id=str(doc["_id"]),
+        id=str(doc["id"]),
         name=doc["name"],
         role=doc["role"],
         shift=doc["shift"],
@@ -21,7 +21,7 @@ async def create_staff(staff: StaffBase) -> dict:
     result = await staff_coll.insert_one(staff.model_dump())
     return {
         "message": "New staff member created successfully",
-        "_id": str(result.inserted_id)
+        "id": str(result.inserted_id)
     }
 
 
@@ -29,14 +29,14 @@ async def get_all() -> List[dict]:
     staff_list: List[dict] = []
     cursor = staff_coll.find({})
     async for doc in cursor:
-        doc["_id"] = str(doc["_id"])
+        doc["id"] = str(doc["id"])
         staff_list.append(doc)
     return staff_list
 
 
 async def get_by_id(staff_id: str) -> Optional[Staff]:
     try:
-        doc = await staff_coll.find_one({"_id": ObjectId(staff_id)})
+        doc = await staff_coll.find_one({"id": ObjectId(staff_id)})
         if doc:
             return dict_to_model(doc)
     except errors.InvalidId:
@@ -47,7 +47,7 @@ async def get_by_id(staff_id: str) -> Optional[Staff]:
 async def update_staff_by_id(staff_id: str, update_data: dict) -> dict:
     try:
         result = await staff_coll.update_one(
-            {"_id": ObjectId(staff_id)},
+            {"id": ObjectId(staff_id)},
             {"$set": update_data}
         )
     except errors.InvalidId:
@@ -65,7 +65,7 @@ async def update_staff_by_id(staff_id: str, update_data: dict) -> dict:
 
 async def delete_staff_by_id(staff_id: str) -> dict:
     try:
-        result = await staff_coll.delete_one({"_id": ObjectId(staff_id)})
+        result = await staff_coll.delete_one({"id": ObjectId(staff_id)})
     except errors.InvalidId:
         raise HTTPException(status_code=400, detail="Invalid staff ID format")
 
@@ -75,7 +75,7 @@ async def delete_staff_by_id(staff_id: str) -> dict:
     return {
         "message": "Staff deleted successfully",
         "deleted_count": result.deleted_count,
-        "_id": staff_id
+        "id": staff_id
     }
 
 async def update_staff(
@@ -87,7 +87,7 @@ async def update_staff(
 
     if isinstance(filter, str):
         try:
-            filter = {"_id": ObjectId(filter)}
+            filter = {"id": ObjectId(filter)}
         except errors.InvalidId:
             raise HTTPException(status_code=400, detail="Invalid staff ID format")
 

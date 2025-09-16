@@ -2,7 +2,7 @@ from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from fastapi import APIRouter,Depends,HTTPException,status
 from typing import Dict
 
-from auth.token import decode_access_token
+from auth.auth_handler import decode_access_token
 from service.auth_service import AuthUser
 from model.auth_user_model import Token, UserCreate, UserResponse
 
@@ -13,7 +13,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/token')
 @auth_router.post("/register", response_model=UserResponse, status_code=201)
 async def register(user: UserCreate):
     created = await AuthUser.register_user(user.email, user.password, role=user.role)
-    return {"id": created["_id"], "email": created["email"], "role": created["role"]}
+    return {"id": created["id"], "email": created["email"], "role": created["role"]}
 
 
 @auth_router.post("/token", response_model=Token)

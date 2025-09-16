@@ -15,7 +15,7 @@ class AppointmentBase(BaseModel):
     updated_at: Optional[datetime] = None
 
 class Appointment(AppointmentBase):
-    iid: str = Field(..., alias="_id")
+    iid: str = Field(..., alias="id")
 
     class Config:
         populate_by_name = True
