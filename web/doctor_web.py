@@ -1,29 +1,37 @@
-from fastapi import APIRouter,Path,Body
-from service import doctor_service as service
-from typing import Optional,List,Dict,Any
-from model.doctor_model import Doctor,DoctorBase
-doctor_router = APIRouter(prefix="/doctors",tags=["Doctors"])
+from fastapi import APIRouter, Path, Body, Depends, HTTPException
+from typing import Dict, Any, List
+from auth.auth_handler import role_required, get_current_user
+from auth.auth_role import Role
+from model.doctor_model import DoctorBase, DoctorCreate, Doctor
+import service.doctor_service as service
 
-@doctor_router.get("/",status_code=200,description="Get the details of all doctor ")
-async def get_all() -> List[dict]:
-    return await service.get_all()
+doctor_router = APIRouter(prefix="/doctors", tags=["Doctors"])
 
-@doctor_router.get("/{id}",status_code=200,description="Get the details of doctor by id ")
-async def get_by_id(id: str=Path(...,description="id of doctor",example=['68c646e649e67bf03e2f274b'])) -> Optional[Doctor]:
-    return await service.get_by_id(id)
-
-@doctor_router.post("/create-new",status_code=201,description="Add new doctor using this endpoint")
-async def create_doctor(doctor: DoctorBase=Body(...)) -> dict:
+# Create a doctor (Admin only)
+@doctor_router.post("/create", response_model=Dict[str, Any], summary="Create a new doctor")
+async def create_doctor(doctor: DoctorCreate, user: Dict[str, Any] = Depends(role_required([Role.ADMIN]))):
     return await service.create_doctor(doctor)
 
-@doctor_router.put("/update/{id}",status_code=202,description="Update the details of doctor using id")
-async def update_doctor_by_id(id: str=Path(...), update_data: dict=Body(...)) -> dict:
-    return await service.update_doctor_by_id(id,update_data)
+# Get all doctors (Admin/Staff only)
+@doctor_router.get("/", response_model=List[Doctor], summary="Get all doctors")
+async def get_all(user: Dict[str, Any] = Depends(role_required([Role.ADMIN, Role.STAFF]))):
+    return await service.get_all()
 
-@doctor_router.put("/update",status_code=202,description="Update the details of doctors")
-async def update_patient(filter: dict=Body(...),update_data: dict=Body(...),multiple_update: bool = False) -> Dict[str, Any]:
-    return await service.update_doctor(filter, update_data, multiple_update)
+# Get doctor by ID (Admin/Staff or self)
+@doctor_router.get("/{id}", response_model=Doctor, summary="Get doctor by ID")
+async def get_by_id(id: str = Path(...), user: Dict[str, Any] = Depends(get_current_user)):
+    if user["role"] == Role.DOCTOR and user["id"] != id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this doctor")
+    return await service.get_by_id(id)
 
-@doctor_router.delete(path="/delete/{id}",status_code=200,description="delete the doctor by id")
-async def delete_doctor_by_id(id: str=Path(...,)) -> dict:
-   return await service.delete_doctor_by_id(id)
+# Update doctor (Admin or self)
+@doctor_router.put("/update/{id}", summary="Update doctor by ID")
+async def update_doctor(id: str, update_data: dict = Body(...), user: Dict[str, Any] = Depends(get_current_user)):
+    if user["role"] == Role.DOCTOR and user["id"] != id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this doctor")
+    return await service.update_doctor_by_id(id, update_data)
+
+# Delete doctor (Admin only)
+@doctor_router.delete("/delete/{id}", summary="Delete doctor by ID")
+async def delete_doctor(id: str, user: Dict[str, Any] = Depends(role_required([Role.ADMIN]))):
+    return await service.delete_doctor(id)
