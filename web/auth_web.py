@@ -4,7 +4,7 @@ from typing import Dict
 
 from auth.auth_handler import decode_access_token
 from service.auth_service import AuthUser
-from model.auth_user_model import Token, UserCreate, UserResponse
+from model.user_model import Token, UserCreate, UserResponse
 
 auth_router = APIRouter(prefix="/auth",tags=["Auth"])
 
